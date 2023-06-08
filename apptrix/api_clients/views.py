@@ -46,26 +46,8 @@ class RegistrationView(CreateAPIView):
                     data: dict = {
                         "Your token for authentication": token.key,
                     }
+                    
                     return Response(data=data, status=status.HTTP_201_CREATED)
                 return Response(ps.errors, status=status.HTTP_400_BAD_REQUEST)
             return Response(us.errors, status=status.HTTP_400_BAD_REQUEST)
         return Response(upass.errors, status=status.HTTP_400_BAD_REQUEST)
-
-# Пример запроса через curl
-
-# curl
-# -X POST http://localhost:8000/api/clients/create/
-# -H "Content-Type: multipart/form-data"
-# -F "avatar_src=@C:\Users\Никита\Desktop\gangster.jpg"
-# -F "avatar_alt=test"
-# -F "username=Nikita"
-# -F "first_name=Nikita"
-# -F "last_name=Orlov"
-# -F "email=t@t.ru"
-# -F "sex=Men"
-# -F "password1=zerozero1"
-# -F "password2=zerozero1"
-
-# Пример ответа
-
-# {"Your token for authentication":"613b78cfc4ae67614ec43689e1400f0774f9c7cb"}

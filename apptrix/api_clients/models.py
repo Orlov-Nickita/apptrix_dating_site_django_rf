@@ -1,5 +1,33 @@
+from io import BytesIO
+from PIL import Image
 from django.contrib.auth.models import User
+from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.db import models
+from apptrix.settings import MEDIA_ROOT
+
+
+def make_watermark(img: Image) -> Image:
+    """
+    TODO
+    :param img:
+    :return:
+    """
+    watermark = Image.open(f'{MEDIA_ROOT}water.png')
+    
+    # Получаем размеры изображений
+    img_width, img_height = img.size
+    
+    # Растягиваем водяной знак до размеров изображения
+    watermark = watermark.resize((img_width, img_height))
+
+    # Создаем объект для наложения водяного знака
+    image_with_watermark = Image.new(mode='RGBA', size=img.size, color=(0, 0, 0, 0))
+    image_with_watermark.paste(im=img, box=(0, 0))
+
+    # Наложение водяного знака на изображение
+    image_with_watermark.paste(im=watermark, box=(0, 0), mask=watermark)
+    
+    return image_with_watermark
 
 
 class Avatar(models.Model):
@@ -17,6 +45,18 @@ class Avatar(models.Model):
         verbose_name = 'Аватарка'
         verbose_name_plural = 'Аватарки'
     
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        img: Image = Image.open(self.src)
+        img: Image = make_watermark(img)
+
+        buffer = BytesIO()
+        img.save(buffer, format='PNG')
+        buffer.seek(0)
+        
+        self.src = InMemoryUploadedFile(buffer, None, self.src.name, 'image/png', buffer.tell(), None)
+        
+        return super().save(force_insert, force_update, using, update_fields)
+
 
 class Profile(models.Model):
     """
