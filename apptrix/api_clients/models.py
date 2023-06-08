@@ -16,7 +16,7 @@ class Avatar(models.Model):
         """
         verbose_name = 'Аватарка'
         verbose_name_plural = 'Аватарки'
-
+    
 
 class Profile(models.Model):
     """
