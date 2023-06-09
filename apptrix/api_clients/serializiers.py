@@ -19,18 +19,32 @@ class AvatarSerializer(serializers.ModelSerializer):
         fields = ['id', 'src', 'alt']
 
 
+class ShortProfileSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор для модели Profile - короткая версия
+    """
+    avatar = AvatarSerializer()
+    
+    class Meta:
+        """
+        Метакласс для определения модели и полей модели, с которыми будет работать сериализатор
+        """
+        model = Profile
+        fields = ['sex', 'avatar']
+
 class UserSerializer(serializers.ModelSerializer):
     """
     Сериализатор для модели User
     """
     id = serializers.IntegerField(read_only=True)
+    profile = ShortProfileSerializer()
     
     class Meta:
         """
         Метакласс для определения модели и полей модели, с которыми будет работать сериализатор
         """
         model = User
-        fields = ['id', 'username', 'first_name', 'last_name', 'email']
+        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'profile']
 
 
 class ProfileSerializer(serializers.ModelSerializer):

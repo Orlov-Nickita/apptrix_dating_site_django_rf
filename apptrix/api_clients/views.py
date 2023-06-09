@@ -1,9 +1,12 @@
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import send_mail
+from django_filters import CharFilter
+from django_filters.rest_framework import FilterSet
 from rest_framework import status
 from rest_framework.authtoken.models import Token
-from rest_framework.generics import CreateAPIView
+from rest_framework.generics import CreateAPIView, ListAPIView
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.parsers import MultiPartParser, FileUploadParser
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -100,3 +103,36 @@ class MatchView(APIView):
         
         return Response(data={"detail": "Sympathy sent to user"},
                         status=status.HTTP_201_CREATED)
+
+
+class PeopleAPIViewPagination(PageNumberPagination):
+    """
+    TODO
+    """
+    page_size_query_param = 'limit'
+
+
+class PeopleViewFilter(FilterSet):
+    """
+    TODO
+    """
+    first_name = CharFilter(field_name='first_name', lookup_expr='icontains')
+    last_name = CharFilter(field_name='last_name', lookup_expr='icontains')
+    sex = CharFilter(field_name='profile__sex', lookup_expr='iexact')
+    
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'sex']
+
+
+class PeopleView(ListAPIView):
+    """
+    TODO
+    """
+    filterset_class = PeopleViewFilter
+    queryset = User.objects.prefetch_related('profile').prefetch_related('profile__avatar').all()
+    serializer_class = UserSerializer
+    pagination_class = PeopleAPIViewPagination
+    
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
