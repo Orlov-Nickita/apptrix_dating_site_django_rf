@@ -1,28 +1,31 @@
+import os.path
 from io import BytesIO
 from PIL import Image
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.db import models
-
-from apptrix.settings import MEDIA_ROOT
+import os
+from apptrix.settings import STATIC_ROOT
 
 
 def make_watermark(img: Image) -> Image:
     """
-    TODO
-    :param img:
-    :return:
+    Функция для наложения водяного знака на аватар пользователя
+    :param img: открытая картинка, которая требует наложения водяного знака, в PIL.Image.open()
+    :return: Объект Image, содержащий совмещенную исходную картинку и водяной знак
     """
-    watermark = Image.open(f'{MEDIA_ROOT}water.png')
+    
+    watermark = Image.open(os.path.join(STATIC_ROOT, 'api_clients', 'watermark', 'water.png'))
     
     # Получаем размеры изображений
-    img_width, img_height = img.size
+    img_width: int = img.size[0]
+    img_height: int = img.size[1]
     
     # Растягиваем водяной знак до размеров изображения
     watermark = watermark.resize((img_width, img_height))
     
     # Создаем объект для наложения водяного знака
-    image_with_watermark = Image.new(mode='RGBA', size=img.size, color=(0, 0, 0, 0))
+    image_with_watermark: Image = Image.new(mode='RGBA', size=img.size, color=(0, 0, 0, 0))
     image_with_watermark.paste(im=img, box=(0, 0))
     
     # Наложение водяного знака на изображение
@@ -47,7 +50,30 @@ class Avatar(models.Model):
         verbose_name_plural = 'Аватарки'
     
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        """
+        Переопределенный метод сохранения аватара пользователя. Перед сохранением накладывается водяной знак, а далее
+        сохраняется в БД и присваивается пользователю.
+        :param force_insert: Используется для создания новых объектов в базе данных.
+        :param force_update: Используется для обновления уже существующих объектов в базе данных.
+        :param using: По умолчанию используется база данных по умолчанию.
+        :param update_fields: Список полей, которые нужно обновить при сохранении объекта. Если этот параметр не
+        указан, то будут обновлены все поля объекта. Этот параметр может использоваться для оптимизации работы с
+        базой данных.
+        :return: Объект модели Аватар сохраняется в БД.
+        """
         img: Image = Image.open(self.src)
+        
+        if hasattr(img, '_getexif'):
+            exifdata = img._getexif()
+            if exifdata:
+                orientation = exifdata.get(274)
+                if orientation == 3:
+                    img = img.rotate(180, expand=True)
+                elif orientation == 6:
+                    img = img.rotate(270, expand=True)
+                elif orientation == 8:
+                    img = img.rotate(90, expand=True)
+        
         img: Image = make_watermark(img)
         
         buffer = BytesIO()
@@ -76,14 +102,14 @@ class Profile(models.Model):
     
     def __str__(self):
         """
-        Возвращается строка с никнеймом пользователя
+        Строка с никнеймом пользователя
         """
         return '{}{}'.format('Доп.инфо пользователя ', self.user.username)
 
 
 class Like(models.Model):
     """
-    TODO
+    Модель Симпатии
     """
     like_from_user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='симпатия от пользователя',
                                        related_name='like_from_user')
@@ -92,6 +118,6 @@ class Like(models.Model):
 
     def __str__(self):
         """
-        TODO
+        Строка с симпатиями между пользователями
         """
         return f'like: {self.like_from_user.first_name} -> {self.like_to_user.first_name}'

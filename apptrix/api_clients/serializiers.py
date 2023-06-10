@@ -1,7 +1,6 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-
 from api_clients.models import Profile, Avatar
 
 
@@ -32,12 +31,13 @@ class ShortProfileSerializer(serializers.ModelSerializer):
         model = Profile
         fields = ['sex', 'avatar']
 
+
 class UserSerializer(serializers.ModelSerializer):
     """
     Сериализатор для модели User
     """
     id = serializers.IntegerField(read_only=True)
-    profile = ShortProfileSerializer()
+    profile = ShortProfileSerializer(read_only=True)
     
     class Meta:
         """
@@ -77,6 +77,11 @@ class SetPasswordSerializer(serializers.Serializer):
     password2 = serializers.CharField(required=True)
     
     def validate(self, attrs):
+        """
+        Валидация присланных в форме паролей.
+        :param attrs: Содержит пароли из отправленной формы.
+        :return: Возвращает массив с паролями или поднимает исключение о не совпадении.
+        """
         if attrs.get('password1') != attrs.get('password2'):
             raise ValidationError("Пароли не совпадают")
         return attrs
