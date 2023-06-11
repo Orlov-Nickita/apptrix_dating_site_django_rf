@@ -1,3 +1,4 @@
+from urllib.parse import unquote
 from django.contrib.auth.models import User
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
@@ -16,20 +17,28 @@ class AvatarSerializer(serializers.ModelSerializer):
         """
         model = Avatar
         fields = ['id', 'src', 'alt']
+    
+    def to_representation(self, instance):
+        """
+        Переопределяет представление поля src модели Avatar, чтобы кириллица отображалась читаемо
+        """
+        a = super().to_representation(instance)
+        a['src'] = unquote(a['src'])
+        return a
 
 
-class ShortProfileSerializer(serializers.ModelSerializer):
+class FullProfileSerializer(serializers.ModelSerializer):
     """
     Сериализатор для модели Profile - короткая версия
     """
     avatar = AvatarSerializer()
-    
+
     class Meta:
         """
         Метакласс для определения модели и полей модели, с которыми будет работать сериализатор
         """
         model = Profile
-        fields = ['sex', 'avatar']
+        fields = ['sex', 'avatar', 'longitude', 'latitude']
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -37,7 +46,7 @@ class UserSerializer(serializers.ModelSerializer):
     Сериализатор для модели User
     """
     id = serializers.IntegerField(read_only=True)
-    profile = ShortProfileSerializer(read_only=True)
+    profile = FullProfileSerializer(read_only=True)
     
     class Meta:
         """
@@ -47,7 +56,7 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ['id', 'username', 'first_name', 'last_name', 'email', 'profile']
 
 
-class ProfileSerializer(serializers.ModelSerializer):
+class RegProfileSerializer(serializers.ModelSerializer):
     """
     Сериализатор для модели Profile
     """

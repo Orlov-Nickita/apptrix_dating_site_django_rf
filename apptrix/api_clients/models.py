@@ -92,6 +92,10 @@ class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, verbose_name='пользователь')
     sex = models.CharField(max_length=20, verbose_name='пол')
     avatar = models.OneToOneField(Avatar, on_delete=models.CASCADE, verbose_name='аватар')
+    longitude = models.DecimalField(decimal_places=8, max_digits=12, verbose_name='долгота местоположения', default=0,
+                                    null=True)
+    latitude = models.DecimalField(decimal_places=8, max_digits=12, verbose_name='широта местоположения', default=0,
+                                   null=True)
     
     class Meta:
         """
@@ -115,7 +119,14 @@ class Like(models.Model):
                                        related_name='like_from_user')
     like_to_user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='симпатия пользователю',
                                      related_name='like_to_user')
-
+    
+    class Meta:
+        """
+        Метакласс для определения названий в единственном и множественном числе
+        """
+        verbose_name = 'Симпатия'
+        verbose_name_plural = 'Симпатии'
+    
     def __str__(self):
         """
         Строка с симпатиями между пользователями

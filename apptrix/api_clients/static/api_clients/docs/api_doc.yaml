@@ -72,26 +72,31 @@ paths:
           type: file
           description: 'Картинка, которая будет представлена аватаром на сайте'
           required: true
+
         - name: avatar_alt
           in: formData
           type: string
           required: true
           description: 'Описание картинки-аватара'
+
         - name: first_name
           in: formData
           type: string
           required: true
           description: 'Имя'
+
         - name: last_name
           in: formData
           type: string
           required: true
           description: 'Фамиля'
+
         - name: email
           in: formData
           type: string
           required: true
           description: 'Электронная почта'
+
         - name: sex
           in: formData
           type: string
@@ -100,21 +105,25 @@ paths:
             - Women
           required: true
           description: 'Пол'
+
         - name: password1
           in: formData
           type: string
           required: true
           description: 'Пароль'
+
         - name: password2
           in: formData
           type: string
           required: true
           description: 'Подтверждение пароля'
+
         - name: username
           in: formData
           type: string
           required: true
           description: 'Логин'
+
       responses:
         '201':
           description: 'Успешная регистрация'
@@ -202,6 +211,11 @@ paths:
           description: 'Пол'
           required: false
           type: string
+        - name: distance
+          in: query
+          description: 'Расстояние в пределах, которого осуществляется поиск'
+          required: false
+          type: integer
         - name: page
           in: query
           description: 'Номер страницы, которую надо открыть, в результате пагинации результатов'
@@ -278,6 +292,7 @@ definitions:
         type: string
         maxLength: 200
         minLength: 1
+
   ShortProfile:
     required:
       - sex
@@ -291,6 +306,19 @@ definitions:
         minLength: 1
       avatar:
         $ref: '#/definitions/Avatar'
+      longitude:
+        title: Долгота местоположения
+        type: number
+        maxLength: 12
+        minLength: 1
+        example: '000.000000'
+      latitude:
+        title: Широта местоположения
+        type: number
+        maxLength: 12
+        minLength: 1
+        example: '000.000000'
+
   User:
     required:
       - username
@@ -300,6 +328,7 @@ definitions:
         title: Id
         type: integer
         readOnly: true
+
       username:
         title: Имя пользователя
         description: Обязательное поле. Не более 150 символов. Только буквы, цифры и символы @/./+/-/_.
@@ -307,18 +336,22 @@ definitions:
         pattern: ^[\w.@+-]+$
         maxLength: 150
         minLength: 1
+
       first_name:
         title: Имя
         type: string
         maxLength: 150
+
       last_name:
         title: Фамилия
         type: string
         maxLength: 150
+
       email:
         title: Адрес электронной почты
         type: string
         format: email
         maxLength: 254
+
       profile:
         $ref: '#/definitions/ShortProfile'

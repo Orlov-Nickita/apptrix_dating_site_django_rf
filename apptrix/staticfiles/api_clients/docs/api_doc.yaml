@@ -1,0 +1,324 @@
+swagger: '2.0'
+info:
+  title: APPTRIX
+  description: Документация для работы с API сайта знакомств от APPTRIX
+  contact:
+    email: orlov.nickita@gmail.com
+  version: 1.0.0
+basePath: /api
+host: 127.0.0.1:8000
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json
+securityDefinitions:
+  api_key:
+    type: apiKey
+    in: header
+    name: Authorization
+    description: 'Для корректной аутентификации необходимо указать - Token <...token...>'
+security:
+  - api_key: []
+
+tags:
+  - name: token
+    description: Получение токена в обмен на логин и пароль. Только для зарегистрированных пользователей
+  - name: users
+    description: URL для работы с пользователями
+
+paths:
+  /api-token-auth/:
+    post:
+      operationId: api-token-auth_create
+      description: 'Получение токена для аутентификации в последующих запросах на сервер'
+      parameters:
+        - name: data
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/AuthToken'
+      responses:
+        '200':
+          description: 'Успешная аутентификация'
+          schema:
+            type: object
+            properties:
+              token:
+                type: string
+                example: "YOUR TOKEN"
+        '400':
+          description: 'Неправильные пароль или логин'
+          schema:
+            properties:
+              error:
+                type: string
+                example: "It is not possible to log in with the credentials provided."
+      tags:
+        - token
+
+  /clients/create/:
+    post:
+      operationId: clients_create_create
+      description: Регистрация нового пользователя и получение аутентификационного токена для дальнейшей работы
+      consumes:
+        - multipart/form-data
+      produces:
+        - application/json
+      parameters:
+        - name: avatar_src
+          in: formData
+          type: file
+          description: 'Картинка, которая будет представлена аватаром на сайте'
+          required: true
+        - name: avatar_alt
+          in: formData
+          type: string
+          required: true
+          description: 'Описание картинки-аватара'
+        - name: first_name
+          in: formData
+          type: string
+          required: true
+          description: 'Имя'
+        - name: last_name
+          in: formData
+          type: string
+          required: true
+          description: 'Фамиля'
+        - name: email
+          in: formData
+          type: string
+          required: true
+          description: 'Электронная почта'
+        - name: sex
+          in: formData
+          type: string
+          enum:
+            - Men
+            - Women
+          required: true
+          description: 'Пол'
+        - name: password1
+          in: formData
+          type: string
+          required: true
+          description: 'Пароль'
+        - name: password2
+          in: formData
+          type: string
+          required: true
+          description: 'Подтверждение пароля'
+        - name: username
+          in: formData
+          type: string
+          required: true
+          description: 'Логин'
+      responses:
+        '201':
+          description: 'Успешная регистрация'
+          schema:
+            type: object
+            properties:
+              Your token for authentication:
+                type: string
+                example: "YOUR TOKEN"
+        '400':
+          description: 'Некорректные регистрационные данные'
+          schema:
+            properties:
+              error_examples:
+                example:
+                  password: "Passwords don't match"
+                  username: "A user with this name already exists"
+                  email: "Enter the correct email address"
+                  avatar_src: "Failed to open/read local data from file/application"
+      tags:
+        - users
+
+  /clients/{user_id}/match/:
+    get:
+      operationId: clients_match_list
+      description: Отправка симпатии другому пользователю, ID которого указан в URL
+      responses:
+        '200':
+          description: 'Успешная отправка симпатии пользователю и совпадение симпатии. В этот момент на электронные почты двух пользователей со взаимной симпатией отправляется письмо с уведомлением'
+          schema:
+            properties:
+              match:
+                type: string
+                example: 'You have mutual sympathy!
+                Rather, write to the mail to get to know each other better!
+                Sent HI-email for {user.first_name} to -> {user.email}'
+        '201':
+          description: 'Успешная отправка симпатии пользователю'
+          schema:
+            properties:
+              detail:
+                type: string
+                example: 'Sympathy sent to user'
+        '208':
+          description: 'Повторная попытка отправить симпатию одному и тому же пользователю'
+          schema:
+            properties:
+              detail:
+                type: string
+                example: "You have already sent a sympathy to this user"
+        '404':
+          description: 'Отправка симпатии пользователю, которого нет в базе данных'
+          schema:
+            properties:
+              error:
+                type: string
+                example: "Not found requested user"
+      tags:
+        - users
+    parameters:
+      - name: user_id
+        in: path
+        required: true
+        type: string
+        description: 'ID пользователя из БД'
+
+
+  /list/:
+    get:
+      operationId: list_list
+      description: Получение списка всех пользователей сайта
+      parameters:
+        - name: first_name
+          in: query
+          description: 'Имя'
+          required: false
+          type: string
+        - name: last_name
+          in: query
+          description: 'Фамилия'
+          required: false
+          type: string
+        - name: sex
+          in: query
+          description: 'Пол'
+          required: false
+          type: string
+        - name: page
+          in: query
+          description: 'Номер страницы, которую надо открыть, в результате пагинации результатов'
+          required: false
+          type: integer
+        - name: limit
+          in: query
+          description: 'Количество записей на одной странице'
+          required: false
+          type: integer
+      responses:
+        '200':
+          description: 'Успешный запрос'
+          schema:
+            required:
+              - count
+              - results
+            type: object
+            properties:
+              count:
+                type: integer
+              next:
+                type: string
+                format: uri
+                x-nullable: true
+              previous:
+                type: string
+                format: uri
+                x-nullable: true
+              results:
+                type: array
+                items:
+                  $ref: '#/definitions/User'
+      tags:
+        - users
+
+definitions:
+  AuthToken:
+    required:
+      - username
+      - password
+    type: object
+    properties:
+      username:
+        title: Имя пользователя
+        type: string
+        minLength: 1
+      password:
+        title: Пароль
+        type: string
+        minLength: 1
+      token:
+        title: Токен
+        type: string
+        readOnly: true
+        minLength: 1
+  Avatar:
+    required:
+      - alt
+    type: object
+    properties:
+      id:
+        title: Id
+        type: integer
+        readOnly: true
+      src:
+        title: Аватар
+        type: string
+        readOnly: true
+        x-nullable: true
+        format: uri
+      alt:
+        title: Описание изображения
+        type: string
+        maxLength: 200
+        minLength: 1
+  ShortProfile:
+    required:
+      - sex
+      - avatar
+    type: object
+    properties:
+      sex:
+        title: Пол
+        type: string
+        maxLength: 20
+        minLength: 1
+      avatar:
+        $ref: '#/definitions/Avatar'
+  User:
+    required:
+      - username
+    type: object
+    properties:
+      id:
+        title: Id
+        type: integer
+        readOnly: true
+      username:
+        title: Имя пользователя
+        description: Обязательное поле. Не более 150 символов. Только буквы, цифры и символы @/./+/-/_.
+        type: string
+        pattern: ^[\w.@+-]+$
+        maxLength: 150
+        minLength: 1
+      first_name:
+        title: Имя
+        type: string
+        maxLength: 150
+      last_name:
+        title: Фамилия
+        type: string
+        maxLength: 150
+      email:
+        title: Адрес электронной почты
+        type: string
+        format: email
+        maxLength: 254
+      profile:
+        $ref: '#/definitions/ShortProfile'
